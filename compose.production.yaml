@@ -1,0 +1,104 @@
+name: ai-notify
+
+x-backend: &backend
+  image: ai-notify-backend:${RELEASE_TAG:-local}
+  build:
+    context: .
+    dockerfile: deploy/backend.Dockerfile
+  env_file: backend/.env
+  volumes:
+    - type: bind
+      source: ./backend/.env
+      target: /app/backend/.env
+      read_only: true
+      bind:
+        create_host_path: false
+  init: true
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ai_notify
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in backend/.env}
+      POSTGRES_DB: ai_notify
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_notify -d ai_notify"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+  migrate:
+    <<: *backend
+    command: ["python", "db.py"]
+    restart: "no"
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      default:
+      elk:
+        aliases: [ai-notify-api]
+
+  worker:
+    <<: *backend
+    command: ["python", "worker.py"]
+    restart: unless-stopped
+    profiles: ["processing"]
+    stop_grace_period: 45s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ai-notify-web:${RELEASE_TAG:-local}
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://api:8000
+    depends_on: [api]
+    init: true
+    logging: *logging
+
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP:?Set BIND_IP in backend/.env}:443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - type: bind
+        source: ./deploy/tls
+        target: /etc/nginx/tls
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on: [web]
+    logging: *logging
+
+volumes:
+  postgres_data:
+
+networks:
+  elk:
+    external: true
+    name: ${ELK_NETWORK:?Set the actual existing ELK network name}

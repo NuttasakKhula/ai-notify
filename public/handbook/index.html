@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="คู่มือใช้งาน Ai Notify ภาษาไทย ตั้งแต่เปิดระบบ ค้นหาเครือข่าย ไปจนถึงรายงาน RCA และ Teams พร้อมโหมดนำเสนอ">
+  <title>Ai Notify — คู่มือใช้งาน & Presentation</title>
+  <link rel="stylesheet" href="handbook.css">
+  <script src="handbook.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">ข้ามไปยังเนื้อหา</a>
+<aside class="rail">
+  <a href="#cover" class="brand"><span class="brand-icon">A<span>↗</span></span> Ai Notify<span class="dot">.</span></a>
+  <div class="rail-label">THE OPERATIONS HANDBOOK</div>
+  <nav id="toc" aria-label="สารบัญคู่มือ"></nav>
+  <div class="rail-bottom">คู่มือภาษาไทย · ฉบับ 01<br>อ้างอิงโค้ด ณ 6 ตุลาคม 2026</div>
+</aside>
+<div class="shell">
+  <header class="toolbar">
+    <span class="toolbar-title">HANDBOOK <span>/</span> คู่มือใช้งานระบบ</span>
+    <div class="actions"><button id="present" aria-pressed="false">▷ โหมดนำเสนอ</button><button id="print">พิมพ์ / PDF</button></div>
+  </header>
+  <main id="content">
+    <section class="slide cover" id="cover" data-title="เริ่มต้นที่นี่" data-group="ภาพรวม">
+      <div class="cover-photo"><img src="assets/network.jpg" alt="สายเครือข่ายเชื่อมต่อกับอุปกรณ์ในตู้แร็ก" width="1600" height="1065"></div>
+      <div class="cover-content"><p class="eyebrow">NETWORK OPERATIONS / USER HANDBOOK</p><h1>เข้าใจเครือข่าย<br>จากเหตุการณ์<br><em>สู่การลงมือแก้ไข</em></h1><p class="lead">คู่มือใช้งาน <strong>Ai Notify</strong><br>ค้นหาอุปกรณ์ · เชื่อมโยง Log · วิเคราะห์ RCA · แจ้งเตือน Teams</p><div class="cover-tags"><span>สำหรับผู้ดูแลระบบ</span><span>สำหรับทีม Network Operations</span></div><a class="cover-cta" href="#quickstart">เริ่มอ่านคู่มือ <span>↗</span></a></div>
+      <div class="cover-bottom"><span>คู่มือ + สื่อประกอบการนำเสนอ</span><span>01 / ฉบับภาษาไทย</span></div>
+    </section>
+
+    <section class="slide" id="quickstart" data-title="เส้นทางเริ่มใช้งาน" data-group="ภาพรวม">
+      <p class="eyebrow">01 / START HERE</p><h2>เริ่มต้นอย่างเป็นลำดับ</h2><p class="intro">Ai Notify รวมข้อมูลเครือข่ายและเหตุการณ์ของแต่ละองค์กรไว้ในพื้นที่ทำงานเดียว เพื่อให้ทีมตรวจสอบสาเหตุและติดตามผลได้สะดวกขึ้น</p>
+      <div class="steps four"><article><b>01</b><h3>เตรียมระบบ</h3><p>เปิดฐานข้อมูล Web, API และ Worker ให้ตรงกับงาน</p></article><article><b>02</b><h3>เลือกองค์กร</h3><p>เข้าสู่ระบบ ตรวจสิทธิ์ และเลือกขอบเขตข้อมูล</p></article><article><b>03</b><h3>ค้นหาเครือข่าย</h3><p>Discover จาก Seed IP แล้วตรวจ Topology และ VLAN</p></article><article><b>04</b><h3>ติดตามเหตุการณ์</h3><p>ดู Log อ่านรายงาน และตรวจสถานะส่ง Teams</p></article></div>
+      <div class="callout"><strong>มีบัญชีและระบบพร้อมแล้ว?</strong> ไปที่ <a href="#login">เข้าสู่ระบบ</a> → <a href="#overview">Overview</a> → <a href="#reports">Analysis reports</a> ได้เลย</div>
+      <div class="presenter"><b>ประเด็นสำหรับนำเสนอ</b> ระบบช่วยรวมบริบทสำหรับการวิเคราะห์ แต่ผล RCA ยังต้องตรวจสอบกับอุปกรณ์และเหตุการณ์จริง</div>
+    </section>
+
+    <section class="slide" id="architecture" data-title="ระบบทำงานอย่างไร" data-group="ภาพรวม">
+      <p class="eyebrow">02 / HOW IT WORKS</p><h2>สองเส้นทางข้อมูล<br>มาบรรจบที่รายงานเดียว</h2>
+      <div class="flow" role="img" aria-label="Discovery เก็บ Topology ผ่าน SSH ส่วน ElastAlert ส่ง Incident เข้า API ทั้งสองเก็บใน PostgreSQL จากนั้น Worker ใช้ Ollama วิเคราะห์และส่ง Teams">
+        <div class="flow-row"><span>Discovery<small>Seed IP + SSH</small></span><i>→</i><span>Network devices<small>CDP / LLDP / VLAN</small></span><i>→</i><span>Topology snapshot<small>ข้อมูลล่าสุดขององค์กร</small></span></div>
+        <div class="flow-row"><span>ElastAlert2<small>เหตุการณ์จากระบบ Log</small></span><i>→</i><span>FastAPI<small>ตรวจ Webhook key</small></span><i>→</i><span>PostgreSQL<small>Logs + คิวรายงาน</small></span></div>
+        <div class="flow-row accent"><span>Worker + บริบทเครือข่าย</span><i>→</i><span>Ollama<small>วิเคราะห์ RCA ภาษาไทย</small></span><i>→</i><span>Report + Teams<small>เมื่อเปิด Ai Notify</small></span></div>
+      </div>
+      <div class="columns"><p><strong>หน้าเว็บ:</strong> Next.js ส่งคำขอผ่าน <code>/api/*</code> ไป FastAPI ใช้สำหรับดูข้อมูลและสั่งงาน</p><p><strong>Worker:</strong> ทำงานเบื้องหลัง แยกวงจร Discovery และ Analysis หาก Worker หยุด งานใหม่อาจค้างในคิว</p></div>
+      <div class="presenter"><b>ประเด็นสำหรับนำเสนอ</b> Discovery สร้างบริบท ส่วน Incident เป็นตัวกระตุ้นการวิเคราะห์ ไม่มีการวิเคราะห์เพียงเพราะเปิดหน้าเว็บ</div>
+    </section>
+
+    <section class="slide" id="roles" data-title="บทบาทและขอบเขตข้อมูล" data-group="ภาพรวม">
+      <p class="eyebrow">03 / ROLES & ORGANIZATIONS</p><h2>เลือกองค์กรให้ถูก<br>ก่อนเริ่มทุกงาน</h2>
+      <div class="table-wrap"><table><thead><tr><th>ความสามารถ</th><th>Admin</th><th>Employee</th></tr></thead><tbody><tr><td>ดู Overview, Topology, Logs และ Reports</td><td>ทุกองค์กร</td><td>องค์กรที่มีสิทธิ์</td></tr><tr><td>สั่ง Discovery และใช้งาน Topology</td><td>องค์กรที่เลือก</td><td>องค์กรที่มีสิทธิ์</td></tr><tr><td>สร้างองค์กร / ผู้ใช้ / เพิ่มสมาชิกองค์กร</td><td>ได้</td><td>ไม่ได้</td></tr><tr><td>เปลี่ยน Webhook key / รหัสผ่านผู้ใช้</td><td>ได้</td><td>ติดต่อ Admin</td></tr><tr><td>เปิด–ปิด Ai Notify ทุกองค์กร</td><td>ได้</td><td>ไม่ได้</td></tr></tbody></table></div>
+      <div class="callout">Employee หนึ่งบัญชีมีสิทธิ์ได้หลายองค์กร สมาชิกในองค์กรเดียวกันเห็นข้อมูลร่วมกัน ส่วน Admin มีสิทธิ์เข้าถึงทุกองค์กร</div>
+      <p class="fine">Webhook key แยกตามองค์กร แต่ปลายทาง Teams และสวิตช์ Ai Notify ใช้ร่วมกันทั้งระบบ</p>
+    </section>
+
+    <section class="slide" id="startup" data-title="เปิดระบบบน Windows" data-group="เริ่มใช้งาน">
+      <p class="eyebrow">04 / START THE APP</p><h2>เปิดระบบบนเครื่องของคุณ</h2><p class="intro">สำหรับเครื่องที่ติดตั้งโปรเจกต์และตั้งค่าแล้ว เปิด Docker Desktop และรอ Engine พร้อม จากนั้นเปิด PowerShell</p>
+      <pre><code>cd D:\astar-v1
+docker compose --env-file backend/.env up -d postgres
+docker compose --env-file backend/.env ps</code></pre>
+      <div class="columns"><article class="card"><span class="pill">ใช้งานครบระบบ</span><h3>Web + API + Worker</h3><pre><code>backend/.venv/Scripts/python backend/run_local.py</code></pre><p>เมื่อฐานข้อมูลขึ้น <code>healthy</code> ใช้คำสั่งนี้เพื่อเริ่มทั้ง 3 บริการ Worker จะรับงานค้างในคิวและอาจส่ง Teams</p></article><article class="card"><span class="pill neutral">เปิดดูข้อมูล</span><h3>Web + API</h3><p>เปิดบริการแยกตาม <a href="#operations">คำสั่งดูแลระบบ</a> เหมาะเมื่อยังไม่ต้องการให้ Worker รับงาน</p><p>อย่ารันชุดแยกพร้อมกับ <code>run_local.py</code> เพราะใช้พอร์ตเดียวกัน</p></article></div>
+      <div class="callout">เปิด <a href="http://localhost:3000" target="_blank" rel="noopener">http://localhost:3000</a> และคงหน้าต่าง PowerShell ที่รันระบบไว้</div>
+    </section>
+
+    <section class="slide" id="login" data-title="เข้าสู่ระบบและเลือกองค์กร" data-group="เริ่มใช้งาน">
+      <p class="eyebrow">05 / SIGN IN</p><h2>เข้าสู่ระบบ<br>แล้วเลือกพื้นที่ทำงาน</h2>
+      <div class="columns"><ol class="numbered"><li><strong>เปิดหน้าเว็บ</strong><p>เข้า <code>http://localhost:3000</code> หรือ URL ที่ผู้ดูแลระบบแจ้ง</p></li><li><strong>กรอกอีเมลและรหัสผ่าน</strong><p>ใช้บัญชีที่ Admin สร้างให้ ระบบไม่มีหน้าสมัครสมาชิกสาธารณะ</p></li><li><strong>เลือก “องค์กรที่กำลังดู”</strong><p>ตรวจชื่อองค์กรก่อนค้นหาอุปกรณ์หรือเปิดดูรายงาน</p></li><li><strong>เริ่มที่ Overview</strong><p>ดูสถานะรวม แล้วเลือกเมนูทางซ้ายตามงานที่ต้องการ</p></li></ol><div class="ui-example"><div class="mock-top">Ai Notify. <span>ตัวอย่างประกอบ</span></div><label>องค์กรที่กำลังดู</label><div class="mock-select">Example Organization <span>⌄</span></div><div class="mock-menu"><b>Overview</b><span>Discovery</span><span>Topology</span><span>Log history</span><span>Analysis reports</span></div><p class="fine">ภาพจำลองเมนูจากโครงสร้างโปรเจกต์ ไม่ใช่ข้อมูลขององค์กรจริง</p></div></div>
+      <div class="callout">การติดตั้งครั้งแรก: รัน <code>backend/.venv/Scripts/python backend/setup_local.py --admin</code> แล้วกรอกอีเมล ชื่อ และรหัสผ่านอย่างน้อย 12 ตัวอักษรด้วยตนเอง ชุดนี้ไม่มีบัญชีหรือรหัสผ่านเริ่มต้น และไม่สร้างไฟล์รหัสผ่าน Admin</div>
+    </section>
+
+    <section class="slide" id="clients" data-title="จัดการองค์กรและผู้ใช้" data-group="เริ่มใช้งาน">
+      <p class="eyebrow">06 / ADMIN ONLY</p><h2>จัดการ Clients & users</h2><p class="intro">เตรียมองค์กรและบัญชีให้พร้อม ก่อนเชื่อมต่อ Incident จาก ElastAlert2</p>
+      <div class="steps"><article><b>01</b><h3>เพิ่มองค์กร</h3><p>กรอกชื่อองค์กร กดเพิ่ม และเก็บ Webhook key ที่แสดงครั้งเดียวในที่เก็บความลับของทีม</p></article><article><b>02</b><h3>สร้างบัญชี</h3><p>ใส่ชื่อ อีเมล รหัสผ่าน บทบาท และองค์กรสำหรับ Employee</p></article><article><b>03</b><h3>เพิ่มสิทธิ์ข้ามองค์กร</h3><p>เลือกบัญชี Employee ที่มีอยู่ แล้วเลือกองค์กรที่ต้องการเพิ่ม การเพิ่มสิทธิ์ไม่ย้ายข้อมูลเดิม</p></article></div>
+      <div class="table-wrap"><table><thead><tr><th>งานดูแลบัญชี</th><th>ผลที่ต้องทราบ</th></tr></thead><tbody><tr><td>เปลี่ยนรหัสผ่านผู้ใช้</td><td>Session เดิมทั้งหมดของบัญชีนั้นถูกยกเลิก ต้องเข้าสู่ระบบใหม่</td></tr><tr><td>ลบผู้ใช้</td><td>บัญชีเข้าใช้งานไม่ได้ ประวัติอ้างอิงยังอยู่ ลบบัญชีตัวเองไม่ได้</td></tr><tr><td>เปลี่ยน Webhook key</td><td>Key เดิมใช้ไม่ได้ ต้องอัปเดตฝั่ง ElastAlert2 ทันที</td></tr></tbody></table></div>
+      <div class="presenter"><b>ประเด็นสำหรับนำเสนอ</b> Clients หมายถึงองค์กร ไม่ใช่อุปกรณ์เครือข่าย และหนึ่งองค์กรมีสมาชิกที่ทำงานกับข้อมูลชุดเดียวกันได้หลายคน</div>
+    </section>
+
+    <section class="slide" id="overview" data-title="อ่านหน้า Overview" data-group="งานประจำวัน">
+      <p class="eyebrow">07 / OVERVIEW</p><h2>อ่านภาพรวมให้ครบ 4 มุม</h2>
+      <div class="metrics"><article><span>01 / NETWORK</span><h3>อุปกรณ์ที่ค้นพบ</h3><p>จำนวนอุปกรณ์และ Links ใน Snapshot ล่าสุด</p></article><article><span>02 / INGESTION</span><h3>Log ทั้งหมด</h3><p>เหตุการณ์ที่รับเข้าและบันทึกในองค์กร</p></article><article><span>03 / ANALYSIS</span><h3>วิเคราะห์สำเร็จ</h3><p>พร้อมจำนวนงานรอประมวลผลและงานไม่สำเร็จ</p></article><article><span>04 / DELIVERY</span><h3>ส่ง Teams สำเร็จ</h3><p>นับการส่งจากรายงานที่วิเคราะห์แล้ว</p></article></div>
+      <div class="columns"><article class="card"><h3>Analysis activity</h3><p>กราฟเปรียบเทียบรายงานทั้งหมดกับรายงานที่วิเคราะห์สำเร็จใน 7 วันล่าสุด โดยแบ่งวันตาม UTC</p></article><article class="card"><h3>Topology & รายงานล่าสุด</h3><p>ตรวจเวลาอัปเดต Topology แล้วเปิดรายงานล่าสุดเพื่อดูอุปกรณ์ สถานะ และรายละเอียด</p></article></div>
+      <div class="callout">ไม่มีข้อมูลในหน้า Overview อาจเป็นเพราะยังไม่เคย Discovery หรือยังไม่มี Incident เข้าองค์กรนั้น ตรวจตัวเลือกองค์กรก่อนเสมอ</div>
+    </section>
+
+    <section class="slide" id="discovery" data-title="ค้นหาอุปกรณ์ด้วย Discovery" data-group="งานประจำวัน">
+      <p class="eyebrow">08 / DISCOVER YOUR NETWORK</p><h2>เริ่มจาก Seed IP<br>สู่แผนผังเครือข่าย</h2>
+      <div class="columns"><div><ol class="numbered"><li><strong>เลือกองค์กร → Discovery</strong><p>ตรวจว่า Worker ทำงานและเครื่องเข้าถึงเครือข่ายที่ได้รับอนุญาต</p></li><li><strong>กรอก Seed IP และ SSH</strong><p>ระบุ SSH username / password ที่มีสิทธิ์อ่านข้อมูลอุปกรณ์</p></li><li><strong>กำหนดความลึก 0–10 hops</strong><p>หน้าเว็บตั้งต้นที่ 3 ควรเลือกตามขอบเขตงาน</p></li><li><strong>กด “เริ่ม Discover Topology”</strong><p>ติดตามงานจนเสร็จ แล้วเปิด Topology</p></li></ol></div><figure class="photo"><img src="assets/engineer.jpg" alt="วิศวกรกำลังตรวจสายเชื่อมต่อในตู้เครือข่าย" width="1200" height="800"><figcaption>ภาพประกอบงานเครือข่าย · Field Engineer / Pexels</figcaption></figure></div>
+      <div class="callout">ผู้ดูแลต้องตั้ง <code>DISCOVERY_ALLOWED_CIDRS</code> ใน <code>backend/.env</code> ให้ครอบคลุมทั้ง Seed และอุปกรณ์ข้างเคียง แล้วเริ่ม Worker ใหม่</div>
+      <p class="fine">หนึ่งองค์กรมี Discovery ที่ active ได้หนึ่งงาน จำกัดเวลาทำงาน 15 นาที ระบบเก็บรหัสผ่าน SSH แบบเข้ารหัสและไม่แสดงกลับในหน้าเว็บ</p>
+    </section>
+
+    <section class="slide" id="progress" data-title="สถานะงานและการยกเลิก" data-group="งานประจำวัน">
+      <p class="eyebrow">09 / DISCOVERY PROGRESS</p><h2>รู้ว่างานอยู่ขั้นตอนไหน</h2>
+      <div class="status-path"><span>queued</span><i>→</i><span>running</span><i>→</i><span class="good">completed</span></div>
+      <div class="table-wrap"><table><thead><tr><th>สถานะ</th><th>ความหมาย / การดำเนินการ</th></tr></thead><tbody><tr><td><code>queued</code></td><td>รอ Worker รับงาน หากรอนานให้ตรวจ Worker</td></tr><tr><td><code>running</code></td><td>กำลังเชื่อมต่อ SSH อ่านข้อมูลอุปกรณ์ เพื่อนบ้าน และ VLAN</td></tr><tr><td><code>completed</code></td><td>เปิด Topology และตรวจผล รวมทั้งรายการอุปกรณ์ที่เข้าถึงไม่ได้</td></tr><tr><td><code>failed</code></td><td>อ่านข้อผิดพลาด ตรวจ SSH / เส้นทาง / CIDR แล้วสร้างงานใหม่หลังแก้ไข</td></tr><tr><td><code>cancelling → cancelled</code></td><td>รอ Worker หยุดงานจริง ถ้ายัง queued จะยกเลิกได้ทันที</td></tr></tbody></table></div>
+      <div class="callout">หน้าเว็บดึงข้อมูลเป็นช่วง ๆ ทุก 5 วินาที ตัวนับอุปกรณ์ที่พบ / ล้มเหลว / รอค้นหาเป็นความคืบหน้าที่สังเกตได้ ไม่ใช่เปอร์เซ็นต์ของเครือข่ายทั้งหมด</div>
+    </section>
+
+    <section class="slide" id="topology" data-title="อ่าน Topology และ VLAN" data-group="งานประจำวัน">
+      <p class="eyebrow">10 / TOPOLOGY & VLAN</p><h2>อ่านการเชื่อมต่อ<br>พร้อมบริบทของบริการ</h2>
+      <div class="columns"><article class="card"><h3>แผนผังเครือข่าย</h3><ul><li>เลือกอุปกรณ์เพื่อดูรายละเอียดและพอร์ต</li><li>ลากอุปกรณ์เพื่อจัดตำแหน่ง ใช้ปุ่มซูมเข้า / ออก</li><li>ค้นหาชื่ออุปกรณ์ในตาราง และอ่านตาราง Links</li><li>กด <strong>Export JSON</strong> เพื่อเก็บข้อมูล Topology พร้อม Layout</li></ul></article><article class="card"><h3>VLAN inventory</h3><ul><li>ค้นหาด้วย VLAN ID, ชื่อ หรืออุปกรณ์</li><li>ดูชื่อ VLAN / Service แยกตามอุปกรณ์</li><li>กดชื่ออุปกรณ์เพื่อกรองตาราง VLAN ตามอุปกรณ์</li><li>ถ้าข้อมูลเดิมไม่มีชื่อรายอุปกรณ์ ให้ Discovery ใหม่เพื่อยืนยัน</li></ul></article></div>
+      <div class="callout warning"><strong>Reset Topology ลบข้อมูลจริง:</strong> ลบ Snapshot และข้อมูล VLAN ทั้งหมดขององค์กรที่เลือก แต่คงประวัติ Discovery, Logs และ Reports ไว้ ระบบไม่ให้ Reset ขณะมี Discovery active</div>
+      <p class="fine">Topology เป็นภาพจาก Discovery ล่าสุด ไม่ใช่การตรวจสถานะอุปกรณ์แบบสดตลอดเวลา ส่วนตำแหน่งที่จัดบนแผนผังเก็บในเบราว์เซอร์</p>
+    </section>
+
+    <section class="slide" id="logs" data-title="ค้นหา Log history" data-group="งานประจำวัน">
+      <p class="eyebrow">11 / FIND THE EVIDENCE</p><h2>เริ่มตรวจเหตุการณ์<br>จากหลักฐานใน Log</h2>
+      <ol class="numbered"><li><strong>เลือกองค์กร → Log history</strong><p>ค้นหาด้วยข้อความหรือชื่ออุปกรณ์ที่เกี่ยวข้อง</p></li><li><strong>กำหนดวันเริ่มต้นและวันสิ้นสุด</strong><p>ตัวกรองครอบคลุมทั้งวันตามเขตเวลาของเบราว์เซอร์ แล้วกดค้นหา</p></li><li><strong>อ่านเวลา อุปกรณ์ ระดับความรุนแรง และข้อความ</strong><p>เทียบพอร์ตและชื่ออุปกรณ์กับ Topology ขององค์กรเดียวกัน</p></li><li><strong>เปิด Original log JSON</strong><p>ตรวจ Payload ต้นฉบับเมื่อจำเป็นต้องตรวจการส่งข้อมูลหรือรายละเอียดเพิ่มเติม</p></li></ol>
+      <div class="columns"><div class="callout"><strong>เวลาใน Log</strong><br>ใช้เวลาจากเหตุการณ์ถ้ามีและอ่านได้ มิฉะนั้นใช้เวลารับเข้า ค่าเดิมยังเก็บอยู่ใน Payload</div><div class="callout"><strong>Ai Notify ปิดอยู่ก็ยังเห็น Log</strong><br>การรับและเก็บ Log ทำงานต่อ ส่วนการวิเคราะห์และแจ้งเตือนถูกระงับ</div></div>
+    </section>
+
+    <section class="slide" id="integration" data-title="เชื่อม Incident จาก ElastAlert2" data-group="การวิเคราะห์และแจ้งเตือน">
+      <p class="eyebrow">12 / INCIDENT INGESTION</p><h2>เชื่อม ElastAlert2<br>เข้ากับองค์กรที่ถูกต้อง</h2><p class="intro">ผู้ดูแลใช้ Webhook key ขององค์กร และส่งเข้า FastAPI ที่ ElastAlert2 เข้าถึงได้ ไม่ใช่พอร์ตหน้าเว็บ Next.js</p>
+      <div class="columns"><pre><code>POST /webhook/incident
+Content-Type: application/json
+X-Webhook-Key: &lt;organization-secret&gt;
+Idempotency-Key: &lt;stable-incident-id&gt;
+
+{
+  "device_name": "SW-CORE-01",
+  "matches": [{
+    "@timestamp": "2026-10-06T03:00:00Z",
+    "message": "Interface Gi1/0/1 down",
+    "severity": "critical"
+  }]
+}</code></pre><div><h3>ตรวจผลการรับเข้า</h3><ul><li>ตอบกลับ <strong>HTTP 202</strong> พร้อม report ID</li><li><code>queued</code> เมื่อเปิด Ai Notify หรือ <code>suppressed</code> เมื่อปิด</li><li>แต่ละ match กลายเป็นรายการ Log ที่ค้นหาได้</li><li>Retry เหตุการณ์เดิมต้องใช้ Idempotency-Key เดิม เหตุการณ์ใหม่ต้องใช้ Key ใหม่</li></ul><p class="fine">ตัวอย่างโครงสร้างสำหรับอธิบาย ไม่ใช่ข้อมูลหรือ Secret ของระบบจริง</p></div></div>
+      <div class="callout">เริ่มตรวจการรับ Log โดยปิด Ai Notify ก่อน จากนั้นค่อยทดสอบ AI / Teams ตามขอบเขตที่ได้รับอนุญาต คู่มือเชื่อมต่อฉบับเต็ม: <code>docs/elastalert-integration.md</code></div>
+    </section>
+
+    <section class="slide" id="reports" data-title="อ่านรายงาน RCA" data-group="การวิเคราะห์และแจ้งเตือน">
+      <p class="eyebrow">13 / ANALYSIS REPORTS</p><h2>อ่าน RCA อย่างมีบริบท</h2><p class="intro">เลือก Analysis reports → ค้นหาอุปกรณ์หรือช่วงวันที่ → กด “เปิดรายงาน”</p>
+      <div class="steps"><article><b>01</b><h3>ตรวจต้นเรื่อง</h3><p>ยืนยันอุปกรณ์ เวลา พอร์ต และ Log ที่เกี่ยวข้อง ก่อนอ่านข้อสรุป</p></article><article><b>02</b><h3>ตรวจบริบทเครือข่าย</h3><p>เทียบอุปกรณ์ที่เชื่อมต่อและ VLAN กับ Snapshot ล่าสุดขององค์กร</p></article><article><b>03</b><h3>พิจารณาแนวทางแก้ไข</h3><p>รายงานขอให้ Ollama สร้าง RCA ภาษาไทย ให้ทีมตรวจความถูกต้องก่อนลงมือกับอุปกรณ์</p></article></div>
+      <div class="status-path"><span>queued</span><i>→</i><span>running</span><i>→</i><span class="good">completed</span><span class="muted">หรือ failed / suppressed</span></div>
+      <div class="callout"><strong>completed ไม่ได้แปลว่าส่ง Teams สำเร็จ</strong> ต้องอ่านสถานะ Microsoft Teams ภายในรายงานแยกอีกครั้ง</div>
+      <div class="presenter"><b>ประเด็นสำหรับนำเสนอ</b> ระบบใช้ Log กับ Topology / VLAN ที่มีอยู่มาประกอบการวิเคราะห์ ถ้าบริบทไม่ครบ ผลวิเคราะห์อาจมีข้อจำกัด</div>
+    </section>
+
+    <section class="slide" id="notify" data-title="Ai Notify และสถานะ Teams" data-group="การวิเคราะห์และแจ้งเตือน">
+      <p class="eyebrow">14 / GLOBAL NOTIFICATION CONTROL</p><h2>หนึ่งสวิตช์<br>มีผลกับทุกองค์กร</h2>
+      <div class="columns"><article class="card on"><span class="pill">ON</span><h3>รับ Log → วิเคราะห์ → ส่ง Teams</h3><p>Admin เปิดที่ Settings เมื่อ Worker, Ollama model และ Teams webhook พร้อม เหตุการณ์ใหม่จะเข้าสู่คิววิเคราะห์</p></article><article class="card"><span class="pill neutral">OFF</span><h3>เก็บ Log และระงับ Analysis</h3><p>ระงับงานวิเคราะห์ที่รอหรือกำลังทำ หยุดการส่งใหม่ การเปิดอีกครั้งจะไม่ย้อนประมวลผลงานที่ suppressed</p></article></div>
+      <div class="table-wrap"><table><thead><tr><th>สถานะ Teams</th><th>อ่านผลอย่างไร</th></tr></thead><tbody><tr><td><code>sent</code></td><td>ระบบได้รับผลตอบรับสำเร็จจาก Webhook ให้ตรวจข้อความในช่อง Teams เมื่อต้องยืนยันปลายทาง</td></tr><tr><td><code>not_sent / sending</code></td><td>ยังไม่ได้ส่ง / อยู่ระหว่างส่ง</td></tr><tr><td><code>failed / unknown</code></td><td>ส่งไม่สำเร็จหรือยืนยันไม่ได้ / Worker หยุดระหว่างส่งจนไม่ทราบผล</td></tr><tr><td><code>suppressed</code></td><td>ระงับตามสวิตช์ Ai Notify</td></tr></tbody></table></div>
+      <p class="fine">ข้อความที่ส่งออกไปแล้วเรียกคืนไม่ได้ ระบบรอการส่งที่กำลังดำเนินการก่อนยืนยัน OFF และไม่ Retry งานที่ขัดจังหวะโดยอัตโนมัติเพื่อลดการแจ้งซ้ำ</p>
+    </section>
+
+    <section class="slide" id="exports" data-title="ส่งออกข้อมูลและรายงาน" data-group="การวิเคราะห์และแจ้งเตือน">
+      <p class="eyebrow">15 / EXPORT & SHARE</p><h2>เลือกไฟล์ให้เหมาะกับงาน</h2>
+      <div class="metrics"><article><span>REPORT</span><h3>MD</h3><p>นำข้อความรายงานไปเรียบเรียงต่อเป็นคู่มือ บันทึกเหตุการณ์ หรือสไลด์</p></article><article><span>REPORT / TOPOLOGY</span><h3>JSON</h3><p>เก็บข้อมูลแบบมีโครงสร้างสำหรับตรวจสอบหรือใช้งานต่อ</p></article><article><span>REPORT</span><h3>CSV</h3><p>นำข้อมูลรายงานไปเปิดด้วยโปรแกรมตารางคำนวณ</p></article><article><span>REPORT</span><h3>PDF</h3><p>เปิดรายงาน → พิมพ์ / PDF → Save as PDF ในเบราว์เซอร์</p></article></div>
+      <div class="callout">ปุ่มส่งออกรายงานจะแสดงเมื่อมีผลวิเคราะห์แล้ว ส่วน <strong>Export JSON ของ Topology</strong> อยู่ในหน้า Topology</div>
+      <h3>ใช้คู่มือนี้ทำ Presentation</h3><p>กด <strong>โหมดนำเสนอ</strong> เพื่อดูทีละหัวข้อ ใช้ปุ่ม ← → เปลี่ยนหน้า และ Esc กลับโหมดอ่าน หรือกด <strong>พิมพ์ / PDF</strong> เพื่อส่งออกทุกหัวข้อเป็นแนวนอน</p><p class="fine">สามารถเปิดไฟล์ HTML ในเครื่องได้โดยตรง เก็บโฟลเดอร์ assets, CSS และ JavaScript ไว้ด้วยกัน</p>
+    </section>
+
+    <section class="slide" id="scenario" data-title="ตัวอย่างการใช้งานหนึ่งเหตุการณ์" data-group="ฝึกใช้งานและดูแลระบบ">
+      <p class="eyebrow">16 / WALKTHROUGH</p><h2>ตัวอย่าง: พอร์ตของ Core Switch down</h2><p class="intro">สถานการณ์สมมติสำหรับสาธิต ไม่ใช่ผลการทดสอบหรือเหตุการณ์จริงในระบบ</p>
+      <div class="timeline"><article><b>ก่อนเกิดเหตุ</b><p>เลือกองค์กรและ Discovery เพื่อให้มี Topology / VLAN ล่าสุด เตรียม Worker และเปิด Ai Notify หลังตรวจ Ollama / Teams</p></article><article><b>รับเหตุการณ์</b><p>ElastAlert2 ส่ง Log ของ SW-CORE-01 และพอร์ต Gi1/0/1 เข้า API ด้วย Key ขององค์กร</p></article><article><b>ตรวจบนเว็บ</b><p>ค้นหา SW-CORE-01 ใน Log history เปิด Payload แล้วเทียบพอร์ตกับ Links ใน Topology</p></article><article><b>อ่านผลและส่งต่อ</b><p>เปิดรายงาน RCA ตรวจข้อเสนอแนะกับหลักฐานจริง ยืนยันสถานะ Teams และส่งออก PDF ให้ทีมปฏิบัติการ</p></article></div>
+      <div class="presenter"><b>แนวทางสาธิต</b> เตรียมข้อมูลสาธิตที่ได้รับอนุญาตไว้ล่วงหน้า แสดงลำดับหน้าจอ Overview → Topology → Logs → Reports เพื่อเล่าเหตุการณ์ต่อเนื่อง</div>
+    </section>
+
+    <section class="slide" id="troubleshooting" data-title="แก้ปัญหาเบื้องต้น" data-group="ฝึกใช้งานและดูแลระบบ">
+      <p class="eyebrow">17 / TROUBLESHOOTING</p><h2>หาจุดติดขัดตามอาการ</h2>
+      <div class="table-wrap"><table><thead><tr><th>อาการ</th><th>ตรวจอะไรเป็นลำดับแรก</th></tr></thead><tbody><tr><td>เปิดเว็บไม่ได้</td><td>Web ขึ้น Ready หรือยัง? ตรวจพอร์ต 3000 และ URL</td></tr><tr><td>เข้าเว็บได้ แต่ Login / โหลดข้อมูลไม่ได้</td><td>API พอร์ต 8000, PostgreSQL healthy และ BACKEND_URL ใน .env.local</td></tr><tr><td>ไม่เห็นข้อมูลที่คาดไว้</td><td>องค์กรที่เลือก สิทธิ์สมาชิก และตัวกรองวันที่ / อุปกรณ์</td></tr><tr><td>Discovery ค้าง queued</td><td>Worker ทำงานหรือไม่ และมีงาน active ขององค์กรอยู่หรือไม่</td></tr><tr><td>Discovery failed / พบอุปกรณ์ไม่ครบ</td><td>Seed IP, SSH, เส้นทางเครือข่าย, CIDR, depth และรายการ failures</td></tr><tr><td>รายงาน suppressed</td><td>Ai Notify ปิดอยู่ หรือถูกปิดระหว่างทำงาน การเปิดใหม่ไม่ Replay</td></tr><tr><td>Analysis failed</td><td>Ollama URL, model ที่โหลดไว้ และการเชื่อมต่อจากเครื่อง Worker</td></tr><tr><td>รายงาน completed แต่ Teams ไม่เข้า</td><td>ดู notification status ตรวจ Webhook / ปลายทาง / เครือข่าย</td></tr><tr><td>Webhook ถูกปฏิเสธ</td><td>ใช้ Backend URL และ X-Webhook-Key ล่าสุดขององค์กรนั้นหรือไม่</td></tr></tbody></table></div>
+      <p class="fine">เมื่อส่งเรื่องให้ผู้ดูแล ระบุเวลา องค์กร Job / Report ID และข้อความผิดพลาด โดยไม่แนบรหัสผ่านหรือ Webhook key</p>
+    </section>
+
+    <section class="slide" id="operations" data-title="คำสั่งเปิดแยกและปิดระบบ" data-group="ฝึกใช้งานและดูแลระบบ">
+      <p class="eyebrow">18 / OPERATOR REFERENCE</p><h2>เปิดบริการแยก และปิดอย่างถูกวิธี</h2><p class="intro">ใช้จาก <code>D:\astar-v1</code> หลังฐานข้อมูลพร้อม โดยเปิดแต่ละบริการใน PowerShell คนละหน้าต่าง</p>
+      <div class="command-block"><h3>1 / API</h3><pre><code>backend/.venv/Scripts/python backend/db.py
+backend/.venv/Scripts/python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8000</code></pre></div>
+      <div class="command-block"><h3>2 / Web</h3><pre><code>npm.cmd run dev -- --hostname 127.0.0.1 --port 3000</code></pre></div>
+      <div class="command-block"><h3>3 / Worker เมื่อพร้อมรับงาน</h3><pre><code>backend/.venv/Scripts/python backend/worker.py</code></pre></div>
+      <div class="callout"><strong>ปิดระบบ:</strong> กด Ctrl+C ในหน้าต่างที่รันแต่ละบริการ ถ้าต้องการหยุดฐานข้อมูลต่อ ให้รัน <code>docker compose --env-file backend/.env stop postgres</code> การปิดแท็บเว็บไม่หยุดบริการ</div>
+      <p class="fine">คำสั่งเหล่านี้ใช้กับบริการที่เปิดใน Terminal หากเริ่มเบื้องหลัง ให้ผู้ดูแลหยุดเฉพาะโปรเซสของบริการนั้น อย่าใช้ down -v เมื่อต้องการเพียงหยุดระบบ เพราะจะลบ Volume ข้อมูล</p>
+    </section>
+
+    <section class="slide" id="setup" data-title="ติดตั้งครั้งแรกและตั้งค่า" data-group="ภาคผนวก">
+      <p class="eyebrow">19 / FIRST-TIME SETUP</p><h2>เตรียมเครื่องครั้งแรก</h2><p class="intro">ตามข้อกำหนดโปรเจกต์: Node.js 20.9+, Python 3.11+ และ Docker Desktop ที่เปิด Engine แล้ว</p>
+      <div class="columns"><pre><code>cd D:\astar-v1
+npm.cmd ci
+python -m venv backend/.venv
+backend/.venv/Scripts/python -m pip install -r backend/requirements.lock.txt
+backend/.venv/Scripts/python backend/setup_local.py
+docker compose --env-file backend/.env up -d postgres
+# รอให้ postgres เป็น healthy
+docker compose --env-file backend/.env ps
+backend/.venv/Scripts/python backend/setup_local.py --admin</code></pre><div><h3>ค่าที่ผู้ดูแลต้องเตรียม</h3><ul><li><code>DATABASE_URL</code> — การเชื่อมต่อ PostgreSQL</li><li><code>DISCOVERY_ALLOWED_CIDRS</code> — เครือข่ายที่อนุญาต</li><li><code>OLLAMA_URL / OLLAMA_MODEL</code> — ปลายทางและโมเดลที่โหลดแล้ว</li><li><code>TEAMS_WEBHOOK_URL</code> — ใน backend/Notify.env หรือค่าไม่ว่างใน backend/.env</li><li><code>BACKEND_URL</code> — ใน .env.local สำหรับ Next.js</li></ul></div></div>
+      <p class="fine">setup_local.py สร้าง config และคีย์เข้ารหัสสำหรับการติดตั้งใหม่ โดยไม่เขียนทับ config หรือ Admin ที่มีอยู่ เก็บฐานข้อมูลและคีย์เข้ารหัสในชุดสำรองข้อมูลด้วย หลังแก้ค่า Worker ให้เริ่ม Worker ใหม่</p>
+      <div class="callout">การติดตั้งบน Ubuntu / ใช้งานจริง ให้ใช้ <code>docs/ubuntu-production.md</code> ซึ่งครอบคลุม HTTPS, APP_ORIGIN, COOKIE_SECURE และการแยกบริการ</div>
+    </section>
+
+    <section class="slide" id="presentation" data-title="โครงเรื่องสำหรับ Presentation" data-group="ภาคผนวก">
+      <p class="eyebrow">20 / PRESENTATION GUIDE</p><h2>จัดเรื่องเล่าให้จบใน 12 นาที</h2>
+      <div class="table-wrap"><table><thead><tr><th>ช่วง</th><th>หัวข้อที่ใช้</th><th>ประเด็นพูด</th></tr></thead><tbody><tr><td>1 นาที</td><td>เริ่มต้น + ภาพรวม</td><td>ทำไมทีมต้องเห็น Log และบริบทเครือข่ายร่วมกัน</td></tr><tr><td>2 นาที</td><td>ระบบทำงานอย่างไร + บทบาท</td><td>ข้อมูลเดินทางอย่างไร และใครดูข้อมูลองค์กรใดได้</td></tr><tr><td>3 นาที</td><td>Discovery + Topology + VLAN</td><td>เตรียมบริบทก่อนเกิด Incident และตรวจผลค้นหา</td></tr><tr><td>3 นาที</td><td>Logs + Reports + Teams</td><td>ตรวจหลักฐาน อ่าน RCA และแยกสถานะส่งแจ้งเตือน</td></tr><tr><td>2 นาที</td><td>ตัวอย่างหนึ่งเหตุการณ์</td><td>เล่าการใช้งานตั้งแต่พอร์ต down จนส่งต่อให้ทีม</td></tr><tr><td>1 นาที</td><td>แก้ปัญหา + สรุปขั้นตอนประจำวัน</td><td>เลือกองค์กร → ตรวจบริบท → ตรวจเหตุการณ์ → ยืนยันผล</td></tr></tbody></table></div>
+      <div class="callout">สำหรับอบรมผู้ใช้งาน ให้เพิ่มหัวข้อ Login, Export และคำสั่งเปิดระบบ สำหรับผู้ดูแล ให้เพิ่ม Clients & users, Webhook และการตั้งค่า</div>
+      <div class="presenter"><b>สคริปต์ปิดท้ายที่นำไปปรับใช้ได้</b> “Ai Notify ทำให้ทีมเข้าถึงข้อมูลเหตุการณ์และบริบทเครือข่ายในที่เดียว ขั้นตอนสำคัญคือเลือกองค์กรให้ถูก ตรวจข้อมูลต้นทาง และยืนยันทั้งผลวิเคราะห์กับผลส่งแจ้งเตือน”</div>
+    </section>
+
+    <section class="slide" id="sources" data-title="คำศัพท์และแหล่งอ้างอิง" data-group="ภาคผนวก">
+      <p class="eyebrow">21 / REFERENCES & IMAGE CREDITS</p><h2>แหล่งข้อมูลสำหรับนำไปใช้ต่อ</h2>
+      <div class="columns"><div><h3>คำศัพท์ในคู่มือ</h3><dl><dt>Seed IP</dt><dd>IP อุปกรณ์เริ่มต้นของการค้นหา</dd><dt>Topology / Snapshot</dt><dd>แผนผังและข้อมูลเครือข่ายที่บันทึกจากการค้นหา</dd><dt>RCA</dt><dd>Root Cause Analysis — การวิเคราะห์สาเหตุของเหตุการณ์</dd><dt>Worker</dt><dd>โปรเซสเบื้องหลังที่รับงานจากคิว</dd><dt>Webhook / Idempotency-Key</dt><dd>ช่องทางรับเหตุการณ์ / Key ป้องกันการสร้าง Incident ซ้ำเมื่อ Retry</dd></dl></div><div><h3>แหล่งข้อมูลในโปรเจกต์</h3><ul class="source-list"><li><code>README.md</code> — ติดตั้งและตรวจระบบ</li><li><code>docs/run-web-windows-th.md</code> — เปิด / ปิดบน Windows</li><li><code>docs/implementation.md</code> — สิทธิ์และพฤติกรรมงาน</li><li><code>docs/elastalert-integration.md</code> — เชื่อม Incident</li><li><code>app/components/workspace.tsx</code> และ <code>vlan-tables.tsx</code> — เมนูและการใช้งานจริง</li><li><code>backend/worker.py</code> และ <code>analysis_prompt.py</code> — สถานะและแนวทาง RCA</li></ul></div></div>
+      <div class="credits"><h3>ภาพจากอินเทอร์เน็ต</h3><p>ภาพสายเครือข่าย: <a href="https://www.pexels.com/photo/cables-connected-on-server-2881229/" target="_blank" rel="noopener">Brett Sayles / Pexels · Photo 2881229</a><br>ภาพวิศวกร: <a href="https://www.pexels.com/photo/electronics-engineer-fixing-cables-on-server-442150/" target="_blank" rel="noopener">Field Engineer / Pexels · Photo 442150</a><br><a href="https://www.pexels.com/license/" target="_blank" rel="noopener">เงื่อนไขการใช้ภาพ Pexels</a> · สืบค้น 6 ตุลาคม 2026 · ภาพใช้ประกอบบริบท ไม่ใช่ภาพสถานที่หรือระบบจริงของโครงการ</p></div>
+      <p class="fine">คู่มือนี้อธิบายพฤติกรรมจากโค้ดและเอกสารที่ตรวจอ่าน ไม่ได้รับรองว่า SSH, Ollama หรือ Teams ของแต่ละสภาพแวดล้อมเชื่อมต่อสำเร็จ ฟอนต์ Noto Sans Thai พร้อมใบอนุญาตอยู่ใน assets/OFL.txt</p>
+    </section>
+  </main>
+  <footer class="reader-footer"><span>Ai Notify / Operations handbook</span><a href="#cover">กลับหน้าแรก ↑</a></footer>
+</div>
+<div class="deck-controls" hidden><button id="prev" aria-label="หัวข้อก่อนหน้า">←</button><span id="counter" aria-live="polite"></span><button id="next" aria-label="หัวข้อถัดไป">→</button><button id="exit">ออกจากโหมดนำเสนอ</button></div>
+</body>
+</html>

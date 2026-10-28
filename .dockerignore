@@ -1,0 +1,27 @@
+# Allow only application build inputs; local files cannot enter build layers.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!next.config.ts
+!next-env.d.ts
+!postcss.config.mjs
+!eslint.config.mjs
+!app/
+!app/**
+!public/
+!public/**
+!backend/
+!backend/*.py
+!backend/*.sql
+!backend/requirements.lock.txt
+!backend/discover-topology/
+!backend/discover-topology/*.py
+!deploy/
+!deploy/*.Dockerfile
+**/.env*
+**/Notify.env
+**/*.key
+**/*.pem
+**/*.pyc
+**/__pycache__/**

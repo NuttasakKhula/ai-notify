@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-28",
+  "scanned_files": 85,
+  "findings": [],
+  "limitations": [
+    "Pattern and filename checks only; no guarantee of complete secret detection",
+    "No live SSH, Ollama or Teams checks",
+    "No Git history included"
+  ],
+  "verification": "See RELEASE-CHECKS.md"
+}

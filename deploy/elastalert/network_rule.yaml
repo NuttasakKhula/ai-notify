@@ -1,0 +1,17 @@
+name: Network_Device_Alert
+type: any
+index: network-logs-*
+aggregation:
+  seconds: 10
+realert:
+  minutes: 0
+aggregation_key: device_name.keyword
+query_key: device_name.keyword
+filter:
+  - query:
+      query_string:
+        query: "(cisco_severity:[0 TO 4] AND message:(down OR error OR fail OR failed OR failure OR loop OR blocking OR Power OR violation OR BPDU OR BPDUGUARD OR CPUHOG)) OR (cisco_severity:5 AND message:(OSPF AND down))"
+alert:
+  - rules.custom_alerter.CombinedWebhookAlerter
+webhook_url: "http://ai-notify-api:8000/webhook/incident"
+webhook_key_file: /opt/elastalert/rules/ai-notify-webhook.key
